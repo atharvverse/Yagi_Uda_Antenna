@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yagi-Uda Antenna Performance Simulator</title>
+<style>
+:root{
+  --black:#050505; --panel:#0d0d0d; --panel2:#121212; --red:#e50914;
+  --white:#fff; --muted:#a7a7a7; --line:#292929; --green:#50d890;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--black);color:var(--white);font-family:Segoe UI,Arial,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.page{min-height:100vh}
+#welcome{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px}
+.welcome-card{width:min(850px,94vw);border:1px solid var(--line);background:linear-gradient(145deg,#101010,#070707);padding:42px;border-radius:18px;box-shadow:0 20px 70px #000}
+.badge{display:inline-block;border:1px solid #5a161a;color:#ff5962;padding:7px 12px;border-radius:999px;font-size:12px;letter-spacing:1.2px}
+h1{font-size:clamp(28px,4vw,48px);margin:18px 0 8px}
+.red{color:var(--red)}
+.subtitle{color:var(--muted);font-size:15px;line-height:1.6}
+.info{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:30px 0}
+.info div{background:#0b0b0b;border:1px solid var(--line);padding:14px;border-radius:10px}
+.info b{display:block;color:#777;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.primary{background:var(--red);border:0;color:white;padding:13px 18px;border-radius:8px;font-weight:800}
+.secondary{background:#111;border:1px solid #393939;color:#fff;padding:11px 15px;border-radius:8px}
+#sim{display:none}
+header{height:72px;border-bottom:1px solid var(--line);background:#080808;position:relative}
+.header-inner{height:100%;display:flex;align-items:center;justify-content:space-between;padding:0 24px;max-width:1500px;margin:auto}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{font-size:25px}.brand h2{margin:0;font-size:17px}.brand p{margin:2px 0 0;color:#777;font-size:11px}
+.student{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-weight:800;font-size:14px}
+.student:before{content:"●";color:var(--red);margin-right:7px}
+.main{max-width:1500px;margin:auto;padding:24px}
+.title{text-align:center;margin-bottom:20px}
+.title h1{font-size:26px;margin:0 0 5px}.title p{margin:0;color:#777;font-size:13px}
+.grid{display:grid;grid-template-columns:330px 1fr;gap:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:17px}
+.card-title{font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:15px}
+.control{margin:15px 0}.control label{display:flex;justify-content:space-between;color:#aaa;font-size:12px;margin-bottom:8px}
+.value{color:white;font-weight:800}
+select,input[type=number]{width:100%;background:#080808;color:#fff;border:1px solid #353535;border-radius:7px;padding:10px}
+input[type=range]{width:100%;accent-color:var(--red)}
+.btnrow{display:flex;gap:8px;margin-top:10px}.btnrow button{flex:1}
+.readout{margin-top:17px;background:#080808;border:1px solid #321012;border-radius:10px;padding:17px;text-align:center}
+.readout small{color:#777;letter-spacing:1px}.signal{font-size:43px;font-weight:900;margin:5px 0}.unit{color:#aaa}.status{display:inline-block;margin-top:9px;padding:6px 10px;border-radius:999px;background:#181818;color:#50d890;font-size:12px;font-weight:700}
+.right{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.visual{min-height:355px}
+.antenna-box{height:290px;position:relative;background:radial-gradient(circle,#181818 0,#090909 62%,#050505 100%);border-radius:9px;overflow:hidden}
+.axis{position:absolute;left:8%;right:8%;top:50%;height:1px;background:#333}
+.boom{position:absolute;left:17%;right:17%;top:50%;height:7px;background:#aaa;border-radius:5px}
+.el{position:absolute;top:50%;width:4px;transform:translateY(-50%);background:#eee;border-radius:3px}
+.refl{height:155px}.driven{height:135px;background:var(--red)}.dir{height:105px}
+.rf{position:absolute;left:17%;right:17%;top:50%;height:0}
+.wave{position:absolute;border:1px solid rgba(229,9,20,.28);border-radius:50%;transform:translate(-50%,-50%)}
+.w1{width:100px;height:100px}.w2{width:180px;height:180px}.w3{width:270px;height:270px}
+.arrow{position:absolute;left:48%;top:50%;height:2px;background:var(--red);transform-origin:left center}
+.arrow:after{content:"";position:absolute;right:-2px;top:-5px;border-left:12px solid var(--red);border-top:6px solid transparent;border-bottom:6px solid transparent}
+.angletext{position:absolute;left:50%;top:14px;transform:translateX(-50%);font-weight:800}
+.pattern{background:#050505;border-radius:9px;width:100%;height:290px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stat{background:#090909;border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center}
+.stat small{display:block;color:#777;font-size:10px;text-transform:uppercase}.stat b{font-size:16px}
+.measure{margin-top:18px}
+.tablewrap{overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}th{color:#888;text-transform:uppercase;font-size:10px}
+.note{color:#777;font-size:11px;line-height:1.5;margin-top:10px}
+@media(max-width:1050px){.grid{grid-template-columns:1fr}.right{grid-template-columns:1fr}.student{display:none}}
+@media(max-width:600px){.info{grid-template-columns:1fr}.main{padding:12px}.header-inner{padding:0 12px}.brand p{display:none}}
+</style>
+
+<style>
+/* ===== 16:9 DESKTOP LAB LAYOUT ===== */
+html,body{width:100%;min-height:100%;height:auto;overflow-x:hidden;overflow-y:auto}
+.page{width:100%;height:100%}
+header{height:7vh;min-height:58px}
+.header-inner{max-width:none;height:100%;padding:0 1.4vw}
+.main{max-width:none;width:100%;min-height:93vh;height:auto;padding:1.0vh 1.4vw 3vh;display:flex;flex-direction:column;gap:1.4vh;overflow:visible}
+.title{display:none}
+.title h1{font-size:clamp(20px,1.8vw,28px);margin:0 0 .35vh}
+.title p{font-size:clamp(10px,.8vw,13px)}
+.grid{height:78vh;min-height:660px;grid-template-columns:minmax(270px,22vw) minmax(0,1fr);gap:1vw}
+.grid>.card{height:100%;min-height:0;overflow:visible}
+.right{height:100%;min-height:0;grid-template-columns:1fr 1fr;gap:1vw}
+.visual{height:100%;min-height:0;padding:1.1vw;display:flex;flex-direction:column}
+.card-title{padding-bottom:1vh;margin-bottom:1vh;font-size:clamp(10px,.85vw,13px)}
+.antenna-box{height:auto;min-height:0;flex:1}
+.pattern{height:auto;min-height:0;flex:1;display:block}
+.stats{margin-top:1vh;gap:.6vw}
+.stat{padding:.7vh .5vw}
+.stat small{font-size:9px}.stat b{font-size:clamp(12px,1vw,16px)}
+.control{margin:.9vh 0}.control label{font-size:clamp(10px,.78vw,12px);margin-bottom:.5vh}
+select,input[type=number]{padding:.75vh .6vw}
+.btnrow{margin-top:.7vh;gap:.5vw}.secondary,.primary{padding:.8vh .65vw;font-size:clamp(10px,.78vw,12px)}
+.readout{margin-top:1vh;padding:1.1vh .7vw}.signal{font-size:clamp(28px,3vw,43px);margin:.2vh 0}.readout small{font-size:9px}
+.note{font-size:9px;margin-top:.7vh;line-height:1.35}
+.measure{height:auto;min-height:19vh;margin:0;padding:1vh 1vw;overflow:visible}
+.measure .card-title{margin-bottom:.5vh}
+.tablewrap{height:calc(100% - 30px);overflow:auto}
+th,td{padding:.55vh .55vw}
+@media(max-width:1050px){html,body{overflow:auto}.main{height:auto;overflow:visible}.grid{height:auto}.right{height:auto}.visual{min-height:350px}.measure{height:auto}.student{display:none}}
+</style>
+
+</head>
+<body>
+<section id="welcome">
+<div class="welcome-card">
+<span class="badge">ENTC RF LABORATORY</span>
+<h1>Testing the Performance of a<br><span class="red">Yagi–Uda Antenna</span></h1>
+<p class="subtitle">Interactive theoretical simulation for measuring directional radiation response, received field strength and front-to-back performance by changing the observation angle.</p>
+<div class="info">
+<div><b>Student Name</b>Atharv Gupta</div>
+<div><b>Class</b>EJ3K G</div>
+<div><b>College</b>Amrutvahini Polytechnic</div>
+<div><b>Department</b>Department of EnTC</div>
+<div><b>Subject Teacher</b>Prof. S. V. Gaikwad</div>
+<div><b>Experiment</b>Yagi–Uda Antenna Performance</div>
+</div>
+<button class="primary" id="start">START SIMULATION →</button>
+</div>
+</section>
+
+<section id="sim">
+<header><div class="header-inner">
+<div class="brand"><div class="logo">📡</div><div><h2>Yagi–Uda RF Laboratory</h2><p>EnTC Practical • Antenna Performance Testing</p></div></div>
+<div class="student">@definitely_atharv</div>
+<button class="secondary" id="back">← Welcome</button>
+</div></header>
+
+<main class="main">
+<div class="grid">
+<aside class="card">
+<div class="card-title">🔴 Antenna & Measurement Controls</div>
+
+<div class="control"><label><span>Operating Frequency</span><span class="value" id="freqV">100 MHz</span></label>
+<input id="freq" type="number" min="1" max="3000" value="100" step="1"></div>
+
+<div class="control"><label><span>Number of Directors</span><span class="value" id="dirV">1</span></label>
+<input id="directors" type="range" min="1" max="8" value="1"></div>
+
+<div class="control"><label><span>Observation Angle</span><span class="value" id="angleV">0°</span></label>
+<input id="angle" type="range" min="0" max="360" value="0"></div>
+
+<div class="control"><label>Manual Angle</label><input id="manual" type="number" min="0" max="360" value="0"></div>
+
+<div class="control"><label>Angle Step</label>
+<select id="step"><option>1</option><option selected>5</option><option>10</option><option>15</option><option>30</option><option>45</option></select></div>
+
+<div class="btnrow"><button class="secondary" id="minus">− STEP</button><button class="secondary" id="plus">+ STEP</button></div>
+<div class="btnrow"><button class="primary" id="record">● RECORD</button></div>
+<div class="btnrow"><button class="secondary" id="clear">CLEAR</button><button class="secondary" id="csv">EXPORT CSV</button></div>
+
+<div class="readout"><small>RECEIVED FIELD STRENGTH</small><div class="signal" id="signal">0.0</div><div class="unit">dB relative to peak</div><span class="status" id="status">Main Lobe</span></div>
+<div class="note">Field strength is normalized to the modeled forward peak (0 dB). The pattern uses published normalized Yagi geometry with an idealized end-fire array-factor approximation; it is not an absolute dBm receiver reading.</div>
+</aside>
+
+<section class="right">
+<div class="card visual"><div class="card-title">◉ Yagi–Uda Antenna Orientation</div>
+<div class="antenna-box" id="antennaBox">
+<div class="axis"></div><div class="angletext" id="angleText">0°</div>
+<div class="boom"></div><div class="rf" id="elements"></div>
+<div class="wave w1" style="left:18%;top:50%"></div><div class="wave w2" style="left:18%;top:50%"></div><div class="wave w3" style="left:18%;top:50%"></div>
+<div class="arrow" id="arrow"></div>
+</div>
+<div class="stats">
+<div class="stat"><small>Wavelength</small><b id="lambda">3.000 m</b></div>
+<div class="stat"><small>Peak</small><b>0.0 dB</b></div>
+<div class="stat"><small>F/B Ratio</small><b id="fb">—</b></div>
+</div></div>
+
+<div class="card visual"><div class="card-title">◉ Theoretical Radiation Pattern</div><canvas id="pattern" class="pattern"></canvas>
+<div class="stats"><div class="stat"><small>Direction</small><b id="direction">Forward</b></div><div class="stat"><small>Response</small><b id="response">100%</b></div><div class="stat"><small>Directivity*</small><b id="directivity">—</b></div></div></div><div class="note">*Directivity is a 3-D theoretical estimate from the dipole element factor × end-fire array factor. Real Yagi performance depends on element geometry, diameter, coupling and construction tolerances.</div></div>
+</section>
+</div>
+
+<section class="card measure"><div class="card-title">▣ Measurement Records</div><div class="tablewrap"><table><thead><tr><th>Sr.</th><th>Angle</th><th>Frequency</th><th>Directors</th><th>Field Strength (dB)</th><th>Response</th><th>Observation</th></tr></thead><tbody id="rows"><tr><td colspan="7" style="color:#777">No measurements recorded.</td></tr></tbody></table></div></section>
+</main>
+</section>
+
+<script>
+const $=id=>document.getElementById(id);
+const state={angle:0, freq:100, directors:1, rows:[]};
+
+function clamp(x,a,b){return Math.max(a,Math.min(b,x));}
+function wavelength(){return 300/state.freq;}
+// Published Yagi-Uda normalized geometry (P. Viezbicke design table)
+// is used as the geometric basis. The radiation pattern is then estimated
+// with a thin-wire/end-fire array-factor model. This is a theoretical
+// approximation, not a full Method-of-Moments/FEKO electromagnetic solve.
+const YAGI_DESIGNS={
+  1:{spacing:0.200,R:0.482,D:[0.442]},
+  2:{spacing:0.200,R:0.482,D:[0.428,0.424]},
+  3:{spacing:0.250,R:0.482,D:[0.428,0.420,0.420]},
+  4:{spacing:0.200,R:0.482,D:[0.432,0.415,0.407,0.398]},
+  5:{spacing:0.200,R:0.475,D:[0.428,0.420,0.407,0.398,0.394]},
+  6:{spacing:0.308,R:0.475,D:[0.424,0.424,0.420,0.407,0.403,0.398]},
+  7:{spacing:0.308,R:0.475,D:[0.424,0.424,0.420,0.407,0.403,0.398,0.394]},
+  8:{spacing:0.308,R:0.475,D:[0.424,0.424,0.420,0.407,0.403,0.398,0.394,0.390]}
+};
+function designFor(n){return YAGI_DESIGNS[clamp(n,1,8)];}
+function complex(re,im){return {re,im};}
+function cadd(a,b){return complex(a.re+b.re,a.im+b.im);}
+function cmul(a,b){return complex(a.re*b.re-a.im*b.im,a.re*b.im+a.im*b.re);}
+function cexp(phi){return complex(Math.cos(phi),Math.sin(phi));}
+function cabs(a){return Math.hypot(a.re,a.im);}
+function yagiAmplitude(angle, directors){
+  const d=designFor(directors), lam=1, k=2*Math.PI/lam, s=d.spacing;
+  const beta=-k*s; // ideal end-fire phase progression toward the directors
+  const m=[-1,0,...Array.from({length:directors},(_,i)=>i+1)];
+  const lengths=[d.R,0.470,...d.D];
+  let sum=complex(0,0);
+  const a=angle*Math.PI/180;
+  for(let i=0;i<m.length;i++){
+    // The reflector is weaker than the driven element; directors are
+    // treated as equal parasitic array weights in this idealized model.
+    const w=(i===0?0.65:1.0);
+    const phase=k*(m[i]*s)*Math.cos(a)+beta*m[i];
+    sum=cadd(sum,cmul(complex(w,0),cexp(phase)));
+  }
+  return cabs(sum);
+}
+function patternAmplitude(angle,directors){
+  return Math.max(1e-9,yagiAmplitude(angle,directors));
+}
+function peakAmplitude(directors){return patternAmplitude(0,directors);}
+function patternDb(angle,directors){
+  // Field-strength ratio: 20 log10(E/Emax).
+  return 20*Math.log10(patternAmplitude(angle,directors)/peakAmplitude(directors));
+}
+function frontBackDb(directors){
+  return 20*Math.log10(peakAmplitude(directors)/patternAmplitude(180,directors));
+}
+function approximateDirectivityDb(directors){
+  // 3-D estimate using a half-wave-dipole element factor multiplied by the
+  // end-fire array factor, then integrated over solid angle.
+  const nTheta=90,nPhi=180;
+  let integral=0,maxP=0;
+  const vals=[];
+  for(let ti=0;ti<=nTheta;ti++){
+    const th=Math.PI*ti/nTheta;
+    const sinTh=Math.sin(th);
+    const elem=sinTh<1e-9?0:Math.abs(Math.cos((Math.PI/2)*Math.cos(th))/sinTh);
+    for(let pi=0;pi<nPhi;pi++){
+      const ph=2*Math.PI*pi/nPhi;
+      const a=Math.atan2(Math.sin(ph)*Math.sin(th),Math.cos(ph)*Math.sin(th))*180/Math.PI;
+      const af=patternAmplitude((a+360)%360,directors);
+      const P=(elem*af)**2;
+      vals.push([th,P]); if(P>maxP)maxP=P;
+    }
+  }
+  const dth=Math.PI/nTheta,dph=2*Math.PI/nPhi;
+  for(const [th,P] of vals) integral+=(P/maxP)*Math.sin(th)*dth*dph;
+  return 10*Math.log10(4*Math.PI/Math.max(integral,1e-9));
+}
+function renderAntenna(){
+  const box=$("elements");
+  const d=designFor(state.directors);
+  const total=state.directors+2;
+  let html='';
+  html+='<div class="el refl" style="left:0;height:'+clamp(120+d.R*55,135,175)+'px"></div>';
+  html+='<div class="el driven" style="left:'+((1/total)*100).toFixed(2)+'%;height:145px"></div>';
+  for(let i=1;i<=state.directors;i++){
+    const left=((i+1)/total)*100;
+    const h=clamp(92+d.D[i-1]*45,105,125);
+    html+='<div class="el dir" style="left:'+left.toFixed(2)+'%;height:'+h.toFixed(0)+'px"></div>';
+  }
+  box.innerHTML=html;
+}
+function metrics(){
+  const db=patternDb(state.angle,state.directors);
+  const lam=wavelength();
+  $("lambda").textContent=lam.toFixed(3)+" m";
+  $("freqV").textContent=state.freq+" MHz";
+  $("dirV").textContent=state.directors;
+  $("angleV").textContent=Math.round(state.angle)+"°";
+  $("angleText").textContent=Math.round(state.angle)+"°";
+  $("signal").textContent=db.toFixed(1);
+  const response=100*Math.pow(10,db/20);
+  $("response").textContent=clamp(response,0,100).toFixed(1)+"%";
+  let status,obs;
+  if(db>-1){status="Main Lobe";obs="Maximum / Strong reception";}
+  else if(db>-3){status="Strong";obs="Strong reception";}
+  else if(db>-6){status="Moderate";obs="Moderate reception";}
+  else if(db>-12){status="Weak";obs="Low reception";}
+  else {status="Null / Very Weak";obs="Near radiation null";}
+  $("status").textContent=status;
+  renderAntenna();
+  const dir=state.angle%360;
+  $("direction").textContent=(dir<=45||dir>=315)?"Forward":(dir>=135&&dir<=225)?"Rear": "Side";
+  // Approximate F/B based on 0° and 180° from the same model.
+  $("fb").textContent=frontBackDb(state.directors).toFixed(1)+" dB";
+  $("directivity").textContent=approximateDirectivityDb(state.directors).toFixed(1)+" dBi*";
+  $("arrow").style.transform=`rotate(${state.angle}deg)`;
+  draw();
+}
+function setAngle(v){state.angle=clamp(Number(v)||0,0,360);$("angle").value=state.angle;$("manual").value=state.angle;metrics();}
+$("freq").addEventListener("input",()=>{state.freq=clamp(Number($("freq").value)||100,1,3000);metrics();});
+$("directors").addEventListener("input",()=>{state.directors=Number($("directors").value);metrics();});
+$("angle").addEventListener("input",e=>setAngle(e.target.value));
+$("manual").addEventListener("change",e=>setAngle(e.target.value));
+$("step").addEventListener("change",()=>{});
+$("minus").onclick=()=>setAngle(state.angle-(Number($("step").value)||5));
+$("plus").onclick=()=>setAngle(state.angle+(Number($("step").value)||5));
+
+function draw(){
+ const c=$("pattern"),r=c.getBoundingClientRect(),d=devicePixelRatio||1,w=r.width,h=r.height;
+ c.width=w*d;c.height=h*d;const x=c.getContext("2d");x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,w,h);
+ x.fillStyle="#050505";x.fillRect(0,0,w,h);
+ const cx=w/2,cy=h/2,rad=Math.min(w,h)*.39;
+ x.strokeStyle="#282828";x.lineWidth=1;
+ for(let i=1;i<=4;i++){x.beginPath();x.arc(cx,cy,rad*i/4,0,Math.PI*2);x.stroke();}
+ for(let deg=0;deg<360;deg+=45){const a=deg*Math.PI/180;x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+Math.cos(a)*rad,cy-Math.sin(a)*rad);x.stroke();}
+ x.beginPath();
+ for(let deg=0;deg<=360;deg++){const a=deg*Math.PI/180,db=patternDb(deg,state.directors),rr=rad*Math.max(.04,Math.pow(10,db/20));const px=cx+Math.cos(a)*rr,py=cy-Math.sin(a)*rr;deg?x.lineTo(px,py):x.moveTo(px,py);}
+ x.closePath();x.fillStyle="rgba(229,9,20,.25)";x.fill();x.strokeStyle="#e50914";x.lineWidth=2;x.stroke();
+ const ca=state.angle*Math.PI/180,cd=patternDb(state.angle,state.directors),cr=rad*Math.max(.04,Math.pow(10,cd/20));
+ x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+Math.cos(ca)*cr,cy-Math.sin(ca)*cr);x.strokeStyle="#fff";x.lineWidth=2;x.stroke();
+ x.fillStyle="#aaa";x.font="11px Segoe UI";x.textAlign="center";x.textBaseline="middle";
+ [[0,"0°"],[45,"45°"],[90,"90°"],[135,"135°"],[180,"180°"],[225,"225°"],[270,"270°"],[315,"315°"]].forEach(([deg,t])=>{const a=deg*Math.PI/180;x.fillText(t,cx+Math.cos(a)*(rad+17),cy-Math.sin(a)*(rad+17));});
+}
+$("record").onclick=()=>{
+ const db=patternDb(state.angle,state.directors);
+ state.rows.push({angle:state.angle,freq:state.freq,dirs:state.directors,db});
+ render();
+};
+$("clear").onclick=()=>{state.rows=[];render();};
+function render(){
+ $("rows").innerHTML=state.rows.length?state.rows.map((m,i)=>{
+   const response=100*Math.pow(10,m.db/20);
+   const obs=m.db>-1?"Maximum / Strong":m.db>-3?"Strong":m.db>-6?"Moderate":m.db>-12?"Low":"Near radiation null";
+   return `<tr><td>${i+1}</td><td>${Math.round(m.angle)}°</td><td>${m.freq} MHz</td><td>${m.dirs}</td><td>${m.db.toFixed(2)} dB</td><td>${clamp(response,0,100).toFixed(1)}%</td><td>${obs}</td></tr>`;
+ }).join(""):`<tr><td colspan="7" style="color:#777">No measurements recorded.</td></tr>`;
+}
+$("csv").onclick=()=>{
+ if(!state.rows.length){alert("Record at least one measurement first.");return;}
+ let csv="Sr No,Angle (Degree),Frequency (MHz),Directors,Field Strength (dB relative to peak),Response (%),Observation\n";
+ state.rows.forEach((m,i)=>{const resp=clamp(100*Math.pow(10,m.db/20),0,100);const obs=m.db>-1?"Maximum / Strong":m.db>-3?"Strong":m.db>-6?"Moderate":m.db>-12?"Low":"Near radiation null";csv+=`${i+1},${m.angle},${m.freq},${m.dirs},${m.db.toFixed(2)},${resp.toFixed(1)},"${obs}"\n`;});
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="Yagi_Uda_Antenna_Measurements.csv";a.click();
+};
+$("start").onclick=()=>{$("welcome").style.display="none";$("sim").style.display="block";metrics();};
+$("back").onclick=()=>{$("sim").style.display="none";$("welcome").style.display="flex";};
+window.addEventListener("resize",draw);
+metrics();
+</script>
+</body>
+</html>
